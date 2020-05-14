@@ -1,0 +1,45 @@
+#%RAML 1.0
+title: mobile-checkin-experience-api
+baseUri: https://localhost:8081/ex/api/mobileCheckIn
+mediaType: 
+  - application/json
+protocols: [HTTPS]
+/tickets:
+  /{PNR}:
+    uriParameters:
+      PNR:
+        pattern: ^[a-zA-Z0-9]{6}$
+        type: string
+        example: RW4TAB
+          
+    
+    /checkin:
+      put:
+        body:
+          application/json:
+            type: !include types/mobilecheckin-Req-types.raml
+            example: !include examples/mobilecheckinReq.json
+        responses:
+          200:
+            body:
+              application/json:
+                type: !include types/mobilecheckin-res-type.raml
+                example: !include examples/mobilecheckinRes.json
+      /paymentApproval:
+        put:
+          body:
+            application/json:
+              type: !include types/passengerapproval-Req-type.raml
+              example: !include examples/passengerapprovalReq.json
+          responses:
+            200:
+              body:
+                type: !include types/passengerapproval-Res-type.raml
+                example: !include examples/passengerapprovalRes.json
+                  
+                  
+
+                
+          
+
+    
