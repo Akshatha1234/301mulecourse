@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd">
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="a54fb004-6336-4507-85de-a6233fe5e5bb" >
+		<http:request-connection host="localhost" port="8085" />
+	</http:request-config>
+	<flow name="passengerupdateFlow" doc:id="5ba029e9-054f-43da-8302-af3157bb5592" >
+		<db:insert doc:name="Insert" doc:id="d516d2dd-737b-470f-9a24-b81b0dea4e37" config-ref="Database_Config">
+			<db:sql >insert into passenger_details values(:loyalty_no, :ticketdate, :origin, :destination);</db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	'loyalty_no' : vars.LNO,
+	'origin' : payload.origin,
+	'ticketdate': payload.date,
+	'destination' : payload.destination
+}]]]></db:input-parameters>
+		</db:insert>
+		<ee:transform doc:name="insert-sucess" doc:id="8fd0fe01-05b0-4ea3-8ab2-830dcbf62490" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"inserted successfully"]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="5fceb8df-33cc-4809-8787-32d61f119836" message="updated the passenger data ++ #[payload]"/>
+	</flow>
+</mule>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="7b4a6465-11dd-4088-8e02-996cefa48d6d" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="akshu102" database="passenger" />
+	</db:config>
+	<flow name="getpassengerDataFlow" doc:id="37eea161-e70a-456c-8523-fafdd6f07e92" >
+		<db:select doc:name="Select" doc:id="9e7bef18-aab7-49a5-a0d2-ee4ded3b4b32" config-ref="Database_Config">
+			<db:sql >select loyaltyno,ticketlastname from passenger_flight where passportno= :flightpassportno</db:sql>
+			<db:input-parameters ><![CDATA[#[{'flightpassportno' : vars.passportno}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Response-payload" doc:id="02417e28-5cfa-49b8-a5fc-3adce2b9469f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"loyaltyNO": payload.loyaltyno,
+	"lastName": payload.ticketlastname
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="bc183b2f-37f6-4b27-8b78-c7adc5b5ca85" message="getPassengerData ++ #[payload]"/>
+	</flow>
+</mule>

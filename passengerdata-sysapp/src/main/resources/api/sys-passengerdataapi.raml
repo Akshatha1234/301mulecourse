@@ -1,0 +1,30 @@
+#%RAML 1.0
+title: Sys-FlightManagementapi
+baseUri: https://localhost:8081/sys/api/passengerData
+mediaType: 
+  - application/json
+protocols: [https]
+/passengers:
+  get:
+    queryParameters: 
+        "passportNo" :
+          type: string
+          required: true
+    responses:
+        200:
+          body:
+            application/json:
+              type: !include type/getPassengerDataTypes.raml
+              example: !include examples/getPassengerData.json
+  /{LNO}:
+    uriParameters:
+      LNO:
+        type: number
+    /flights:
+      post:
+        body:
+          application/json:
+            type: !include type/PassengerDataLNO-Req-Type.raml
+            example: !include examples/passengerDataLNO.json
+        responses:
+          200:
