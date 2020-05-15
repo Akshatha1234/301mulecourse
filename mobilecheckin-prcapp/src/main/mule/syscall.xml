@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="2e322b80-8974-4360-9ce8-179ee850e68a" >
+		<http:request-connection host="localhost" port="8081" connectionIdleTimeout="40000" protocol="HTTPS">
+			<tls:context >
+				<tls:trust-store path="keystore/truststore.ts" password="truststorepass" type="jks"/>
+			</tls:context>
+		</http:request-connection>
+	</http:request-config>
+	<http:request-config name="HTTP_Request_configuration1" doc:name="HTTP Request configuration" doc:id="b135af12-a4e2-4bb6-af3d-c5e5ed2c5618" >
+		<http:request-connection host="localhost" port="8082" protocol="HTTPS">
+			<tls:context >
+				<tls:trust-store path="keystore/truststore.ts" password="truststorepass" type="jks"/>
+			</tls:context>
+		</http:request-connection>
+	</http:request-config>
+	<http:request-config name="HTTP_Request_configuration2" doc:name="HTTP Request configuration" doc:id="cec613ed-91d1-4582-a2d4-518f0f3e4b5c" >
+		<http:request-connection host="localhost" port="8085" protocol="HTTPS">
+			<tls:context >
+				<tls:trust-store path="keystore/truststore.ts" password="truststorepass" type="jks"/>
+			</tls:context>
+		</http:request-connection>
+	</http:request-config>
+	<flow name="syscallFlow" doc:id="b1b19af9-a301-4513-8910-5528a9ee799a" >
+		<try doc:name="Try" doc:id="2d2ad3ff-ddea-4fcd-aa35-fe08ad464aa0" >
+			<http:request method="GET" doc:name="getFlightData-Request" doc:id="0c384495-9bf9-431a-9c16-898a00151d22" config-ref="HTTP_Request_configuration" path="/api/tickets/{PNR}">
+			<http:uri-params><![CDATA[#[{ 'PNR' :attributes.uriParams.'PNR'}]]]></http:uri-params>
+		</http:request>
+			<ee:transform doc:name="Transform Message" doc:id="9d2e1308-c4af-4e0c-92f0-71e197f6fdfc">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="flightpayload"><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+				<ee:set-variable variableName="passportno"><![CDATA[%dw 2.0
+output application/json
+---
+payload.ticketHolderPassportNo]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+			<http:request method="GET" doc:name="GetPassengerData-Request" doc:id="9099580b-b215-4da7-9e27-baa14f4b4402" config-ref="HTTP_Request_configuration1" path="/api/passengers">
+			<http:query-params><![CDATA[#[output application/java
+---
+{
+	"passportNo" : vars.passportno
+}]]]></http:query-params>
+		</http:request>
+			<ee:transform doc:name="Transform Message" doc:id="0340f262-1f6a-4384-ac79-2789cbb0474d">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			<ee:transform doc:name="Transform Message" doc:id="6316b5bf-0bdf-4e6c-a82e-588f7b1ba751">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="loyaltyno"><![CDATA[%dw 2.0
+output application/json
+---
+payload.loyaltyNO[0]]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+			<ee:transform doc:name="Transform Message" doc:id="29006230-273f-498f-aa55-16a1c249e09d">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+vars.payloadflight]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			<http:request method="PUT" doc:name="Flightcheckin-Request" doc:id="a8413dd0-de6c-4204-8c43-54b40374e630" config-ref="HTTP_Request_configuration" path="/api/tickets/{PNR}/checkin">
+			<http:uri-params><![CDATA[#[{ 'PNR' : vars.PNR}]]]></http:uri-params>
+		</http:request>
+			<ee:transform doc:name="Transform Message" doc:id="c64be3dc-c789-474e-999e-3dd7dfedc59f">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	
+  "date":"2019-08-08",
+  "origin": vars.flightpayload.origin,
+  "destination": vars.flightpayload.destination
+
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			<http:request method="POST" doc:name="PassengerCheckin-Request" doc:id="c327da6d-214f-47de-9ba0-2cf927d3e1ef" config-ref="HTTP_Request_configuration1" path="/api/passengers/{LNO}/flights" outputMimeType="application/json">
+			<http:uri-params><![CDATA[#[{ 'LNO' :vars.loyaltyno }]]]></http:uri-params>
+		</http:request>
+			<ee:transform doc:name="Transform Message" doc:id="0c56fed4-6dac-4b5f-8503-47d874100af5">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "description": "payment achieved",
+  "amount": 20000
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			<http:request method="POST" doc:name="paypal-Request" doc:id="e2504ca5-8fb1-4f55-870d-c4ac79e18b7f" path="/api/payments" config-ref="HTTP_Request_configuration2" />
+			<ee:transform doc:name="Transform Message" doc:id="2e9f14db-300e-4238-839e-416bd8787dbb">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="e04de8b5-84aa-4e0a-a130-393d7a436557">
+					<logger level="INFO" doc:name="Logger" doc:id="c88ad04f-1a7f-4cbd-9717-48f29c744a1e" message="error from getflight ++#[payload]"/>
+			</on-error-propagate>
+			</error-handler>
+		</try>
+	</flow>
+</mule>

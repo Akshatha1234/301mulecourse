@@ -1,0 +1,38 @@
+#%RAML 1.0
+title: MobileCheckInPrcapi
+baseUri: https://localhost:8081/prc/api/mobileCheckin
+description: mobile-checin
+mediaType: 
+  - application/json
+protocols: [HTTPS]
+/tickets:
+  /{PNR}:
+    uriParameters:
+      PNR:
+        pattern: ^[A-Za-z0-9]{6}$
+        type: string
+        example:
+          RW4TAB
+    /checkin:
+      put:
+        body:
+          application/json:
+            type: !include types/mobilecheckin-Req-types.raml
+            example: !include examples/mobileCheckinReq.json
+        responses:
+          200:
+            body:
+              application/json:
+                type: !include types/mobilecheckin-Res-types.raml
+                example: !include examples/mobileCheckinRes.json
+      /paymentApproval:
+        put:
+          body:
+            application/json:
+              type: !include types/passengerapproval-Req-types.raml
+              example: !include examples/passengerapprovalReq.json
+          responses:
+            200:
+              body:
+                type: !include types/passengerapproval-Res-types.raml
+                example: !include examples/passengerapprovalRes.json
